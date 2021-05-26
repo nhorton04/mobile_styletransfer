@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from core.loss.gan_loss import GANLoss
 from core.loss.perceptual_loss import PerceptualLoss
-from pytorch_wavelets import DWTInverse, DWTForward
+from pytorch_wavelet import *
 
 
 class DistillerLoss(nn.Module):
@@ -30,7 +30,8 @@ class DistillerLoss(nn.Module):
         loss = {"l1": 0, "l2": 0}
         for _pred in pred["freq"]:
             _pred_rgb = self.dwt_to_img(_pred)
-            _gt_rgb = F.interpolate(gt["img"], size=_pred_rgb.size(-1), mode='bilinear', align_corners=True)
+            _gt_rgb = F.interpolate(
+                gt["img"], size=_pred_rgb.size(-1), mode='bilinear', align_corners=True)
             _gt_freq = self.img_to_dwt(_gt_rgb)
             loss["l1"] += self.l1_loss(_pred_rgb, _gt_rgb)
             loss["l2"] += self.l2_loss(_pred_rgb, _gt_rgb)
@@ -39,7 +40,8 @@ class DistillerLoss(nn.Module):
         # perceptual_loss
         loss["loss_p"] = self.perceptual_loss(pred["img"], gt["img"])
         # gan loss
-        loss["loss_g"], loss["loss_gp"] = self.gan_loss.loss_g(pred["img"], gt["img"])
+        loss["loss_g"], loss["loss_gp"] = self.gan_loss.loss_g(
+            pred["img"], gt["img"])
 
         # total loss
         loss["loss"] = 0
@@ -52,7 +54,8 @@ class DistillerLoss(nn.Module):
 
     def loss_discriminator(self, pred, gt):
         loss = {}
-        loss["loss"] = loss["loss_d"] = self.gan_loss.loss_d(pred["img"].detach(), gt["img"])
+        loss["loss"] = loss["loss_d"] = self.gan_loss.loss_d(
+            pred["img"].detach(), gt["img"])
         return loss
 
     def img_to_dwt(self, img):
